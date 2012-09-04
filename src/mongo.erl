@@ -34,7 +34,7 @@
 -export ([add_user/3]).
 
 -export_type ([index_spec/0, key_order/0]).
--export ([create_index/2]).
+-export ([create_index/2, create_index/3]).
 
 -export ([copy_database/3, copy_database/5]).
 
@@ -413,16 +413,22 @@ add_user (Permission, Username, Password) ->
 -spec create_index (collection(), index_spec() | key_order()) -> ok. % Action
 %@doc Create index on collection according to given spec. Allow user to just supply key
 create_index (Coll, IndexSpec) ->
+    create_index(Coll, IndexSpec, false).
+
+-spec create_index (collection(), index_spec() | key_order(), true | false) -> ok. % Action
+%@doc Create index on collection according to given spec. Allow user to just supply key
+create_index (Coll, IndexSpec, Uniqueness) ->
+
 	Db = this_db (),
-	Index = bson:append ({ns, mongo_protocol:dbcoll (Db, Coll)}, fillout_indexspec (IndexSpec)),
+	Index = bson:append ({ns, mongo_protocol:dbcoll (Db, Coll)}, fillout_indexspec (IndexSpec, Uniqueness)),
 	insert ('system.indexes', Index).
 
--spec fillout_indexspec (index_spec() | key_order()) -> index_spec().
+-spec fillout_indexspec (index_spec() | key_order(), true | false) -> index_spec().
 % Fill in missing optonal fields with defaults. Allow user to just supply key_order
-fillout_indexspec (IndexSpec) -> case bson:lookup (key, IndexSpec) of
-	{Key} when is_tuple (Key) -> bson:merge (IndexSpec, {key, Key, name, gen_index_name (Key), unique, false, dropDups, false});
-	{_} -> {key, IndexSpec, name, gen_index_name (IndexSpec), unique, false, dropDups, false}; % 'key' happens to be a user field
-	{} -> {key, IndexSpec, name, gen_index_name (IndexSpec), unique, false, dropDups, false} end.
+fillout_indexspec (IndexSpec, Uniqueness) -> case bson:lookup (key, IndexSpec) of
+	{Key} when is_tuple (Key) -> bson:merge (IndexSpec, {key, Key, name, gen_index_name (Key), unique, Uniqueness, dropDups, false});
+	{_} -> {key, IndexSpec, name, gen_index_name (IndexSpec), unique, Uniqueness, dropDups, false}; % 'key' happens to be a user field
+	{} -> {key, IndexSpec, name, gen_index_name (IndexSpec), unique, Uniqueness, dropDups, false} end.
 
 -spec gen_index_name (key_order()) -> bson:utf8().
 gen_index_name (KeyOrder) ->
