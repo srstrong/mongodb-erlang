@@ -241,6 +241,7 @@ write(Request) ->
 		SafeMode ->
 			Params = case SafeMode of safe -> {}; {safe, Param} -> Param end,
 			Ack = write(Context#context.connection, Context#context.database, Request, Params),
+		        put(mongo_lasterror, Ack),
 			case bson:lookup(err, Ack, undefined) of
 				undefined -> ok;
 				String ->
