@@ -17,7 +17,7 @@
 
 -record(state, {
 	supervisor  :: pid(),
-	connections :: array(),
+	connections :: array:array(),
 	monitors    :: orddict:orddict()
 }).
 
